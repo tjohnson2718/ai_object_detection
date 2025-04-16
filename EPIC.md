@@ -134,3 +134,7 @@ By the end of week 9, the system will:
 6. Clear documentation
 7. Test coverage > 80%
 8. Successful local deployment 
+
+# Possible Front-end Frameworks
+## REACT
+### REACT w/NextJS

@@ -1,0 +1,1 @@
+all = ["src", "data"]
