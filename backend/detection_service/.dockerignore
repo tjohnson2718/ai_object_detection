@@ -1,0 +1,6 @@
+client/
+data/
+test_results/
+client.py
+setup_proto.ps1
+*.sh

@@ -1,0 +1,30 @@
+name: object_detection
+services:
+  detection_service:
+    build:
+      context: ./detection_service
+      dockerfile: DockerFile.detection
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=${HOST}
+      - PORT=${DET_PORT}
+      - MODEL_PATH=/app/yolov8n.pt
+      - CONFIDENCE_THRESHOLD=${CONFIDENCE_THRESHOLD}
+      - IOU_THRESHOLD=${IOU_THRESHOLD}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+    volumes:
+      - ./detection_service/models:/app/models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - detection_network
+
+networks:
+  detection_network:
+    driver: bridge
