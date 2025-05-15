@@ -35,7 +35,7 @@ app.add_middleware(
 
 # Initialize model with GPU support
 model_path = os.environ.get("MODEL_PATH", "./yolov8n.pt")
-conf_threshold = float(os.environ.get("CONFIDENCE_THRESHOLD", "0.5"))
+conf_threshold = float(os.environ.get("CONFIDENCE_THRESHOLD", '0.5'))
 iou_threshold = float(os.environ.get("IOU_THRESHOLD", "0.45"))
 
 # Initialize YOLO with GPU support

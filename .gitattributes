@@ -9,4 +9,3 @@ backend/fashion_detection_training/**/*.json filter=lfs diff=lfs merge=lfs -text
 backend/fashion_detection_training/**/*.pt filter=lfs diff=lfs merge=lfs -text
 backend/fashion_detection_training/**/*.pth filter=lfs diff=lfs merge=lfs -text
 backend/fashion_detection_training/**/*.weights filter=lfs diff=lfs merge=lfs -text
-

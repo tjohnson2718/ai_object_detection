@@ -1,10 +1,10 @@
 fastapi
-uvicorn[standard]
-ultralytics
-opencv-python-headless
-numpy
+uvicorn
 python-multipart
-torch>=2.0.0
-torchaudio
+python-dotenv
+ultralytics
+opencv-python
+numpy
+torch
 torchvision
 
