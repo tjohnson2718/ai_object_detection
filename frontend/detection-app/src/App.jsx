@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import './App.css';
-import { getBase64FromVideo, detectObjectsInFrame } from './services/detectionService';
+import { getBase64FromVideo, detectObjectsInFrame, parseQuery } from './services/detectionService';
 import DetectionOverlay from './components/DetectionOverlay';
 
 function App() {
@@ -10,6 +10,8 @@ function App() {
   const [detections, setDetections] = useState([]);
   const [isDetecting, setIsDetecting] = useState(false);
   const [videoSize, setVideoSize] = useState({ width: 0, height: 0});
+  const [query, setQuery] = useState('');
+  const [detectionClasses, setDetectionClasses] = useState(null);
 
   const detectionIntervalRef = useRef(null);
 
@@ -70,6 +72,8 @@ function App() {
   const toggleDetection = useCallback(() => {
     setIsDetecting(prevState => {
       if (!prevState) {
+        // Start detection with all classes (null)
+        setDetectionClasses(null);
         runDetection();
 
         detectionIntervalRef.current = setInterval(() => {
@@ -78,6 +82,7 @@ function App() {
 
         return true;
       } else {
+        // Stop detection
         if (detectionIntervalRef.current) {
           clearInterval(detectionIntervalRef.current);
           detectionIntervalRef.current = null;
@@ -87,27 +92,52 @@ function App() {
     });
   }, []);
 
+  const handleQuerySubmit = async (e) => {
+    e.preventDefault();
+    
+    // Stop current detection if running
+    if (isDetecting) {
+      if (detectionIntervalRef.current) {
+        clearInterval(detectionIntervalRef.current);
+        detectionIntervalRef.current = null;
+      }
+      setIsDetecting(false);
+    }
+
+    try {
+      // Parse the query to get classes
+      const classes = await parseQuery(query);
+      setDetectionClasses(classes);
+      
+      // Start new detection with the parsed classes
+      setTimeout(() => {
+        setIsDetecting(true);
+        runDetection();
+        detectionIntervalRef.current = setInterval(() => {
+          runDetection();
+        }, 200);
+      }, 100);
+    } catch (error) {
+      console.error('Error processing query:', error);
+      // Optionally show an error message to the user
+    }
+  };
+
   const runDetection = async () => {
     if (!webcamRef.current || !webcamRef.current.videoWidth) return;
     
     try {
-      // Get base64 image from video
       const base64Image = await getBase64FromVideo(webcamRef.current);
       
-      // Update video dimensions for overlay
       setVideoSize({
         width: webcamRef.current.videoWidth,
         height: webcamRef.current.videoHeight
       });
       
-      // Send to backend for detection
-      const result = await detectObjectsInFrame(base64Image);
+      // Pass the current detection classes to the detection service
+      const result = await detectObjectsInFrame(base64Image, detectionClasses);
       
-      console.log("Detection result:", result);
-      
-      // Check if the result has the expected structure
       if (result && result.detections && Array.isArray(result.detections)) {
-        // Verify that each detection has the required properties
         const validDetections = result.detections.filter(det => 
           det && det.bbox && 
           typeof det.bbox.x_min === 'number' && 
@@ -144,7 +174,6 @@ function App() {
       <h1>Object Detection</h1>
       
       <div className="webcam-container">
-        {/* Video display area with overlay */}
         <div className="video-box">
           {recording ? (
             <div className="video-with-overlay">
@@ -170,7 +199,25 @@ function App() {
           )}
         </div>
         
-        {/* Controls */}
+        {recording && (
+          <form onSubmit={handleQuerySubmit} className="query-form">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Enter what you want to detect (e.g., 'Show me all cars and people')"
+              className="query-input"
+            />
+            <button 
+              type="submit" 
+              className="query-submit"
+              disabled={!query.trim()} // Disable if query is empty
+            >
+              Apply Query
+            </button>
+          </form>
+        )}
+        
         <div className="controls">
           <button 
             onClick={toggleRecording} 
@@ -190,7 +237,6 @@ function App() {
           )}
         </div>
         
-        {/* Detection stats */}
         {isDetecting && detections.length > 0 && (
           <div className="detection-stats">
             <h3>Detected Objects: {detections.length}</h3>

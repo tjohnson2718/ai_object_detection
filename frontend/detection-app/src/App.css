@@ -191,3 +191,32 @@ h1 {
   border-radius: 15px;
   font-size: 14px;
 }
+
+.query-form {
+  display: flex;
+  gap: 10px;
+  margin: 10px 0;
+  padding: 0 20px;
+}
+
+.query-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.query-submit {
+  padding: 8px 16px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.query-submit:hover {
+  background-color: #45a049;
+}

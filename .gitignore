@@ -66,3 +66,8 @@ dist-ssr
 
 # Test results
 test_results/
+fashion_detection_training/data/test/
+fashion_detection_training/data/train/
+fashion_detection_training/data/validation/
+backend/fashion_detection_training/data/data.yaml
+backend/fashion_detection_training/data/

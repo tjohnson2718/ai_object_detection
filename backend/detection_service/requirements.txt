@@ -7,4 +7,5 @@ opencv-python
 numpy
 torch
 torchvision
+crewai
 

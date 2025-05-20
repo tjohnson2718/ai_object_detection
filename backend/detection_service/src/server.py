@@ -3,7 +3,7 @@ import base64
 import io
 import logging
 import os
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 import numpy as np
 from fastapi import FastAPI, HTTPException, Request
@@ -16,6 +16,7 @@ from dotenv import load_dotenv
 import torch
 
 from yolo_service import YOLOOperations
+from language_service import LanguageService
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -56,7 +57,8 @@ else:
 logger.info(f"Detection service initialized with model: {model_path}")
 
 class DetectionRequest(BaseModel):
-    image_data: str # Base64 encoded image
+    classes: Optional[List[str]] = None
+    image_data: str
     timestamp: int = 0
     
 class BoundingBox(BaseModel):
@@ -81,12 +83,29 @@ class BatchDetectionRequest(BaseModel):
 class BatchDetectionResponse(BaseModel):
     results: List[DetectionResponse]
     
+class QueryRequest(BaseModel):
+    query: str
+
+@app.post("/parse_query")
+async def parse_query(request: QueryRequest):
+    try:
+        logger.info(f"Parsing query: {request.query}")
+        language_service = LanguageService()
+        classes = language_service.parse_query(request.query)
+        logger.info(f"Parsed classes: {classes}")
+        return {"classes": classes}
+    except Exception as e:
+        logger.error(f"Error in parse_query: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+    
 @app.post("/detect", response_model=DetectionResponse)
 async def detect_objects(request: DetectionRequest,
                          run_custom_detection: bool = False,
                          custom_classes: list[str] = []):
     try:
-        # Decode the base64 image
+        # Use the classes directly from the request
+        classes = request.classes
+        logger.info(f"Detection classes: {classes}")
         try:
             if "," in request.image_data:
                 base64_data = request.image_data.split(",")[1]
@@ -99,11 +118,8 @@ async def detect_objects(request: DetectionRequest,
             raise HTTPException(status_code=400, detail="Invalid image data format")
         
         # First pass: Yolo detection
-        detections = yolo_ops.detect_objects(image_bytes)
-        
-        # Second pass: Custom detection
-        if run_custom_detection and custom_classes:
-            pass # Will be implemented after initial training has begun
+        detections = yolo_ops.detect_objects(image_bytes, classes)
+        logger.info(f"YOLO detection returned {len(detections)} objects")
         
         # Format the response
         detection_objects = []
@@ -118,6 +134,8 @@ async def detect_objects(request: DetectionRequest,
                     y_max=det["bbox"][3]
                 )
             ))
+        
+        logger.info(f"Formatted {len(detection_objects)} detections for response")
         
         return DetectionResponse(
             detections=detection_objects,

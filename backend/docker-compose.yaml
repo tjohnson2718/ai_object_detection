@@ -13,6 +13,7 @@ services:
       - CONFIDENCE_THRESHOLD=${CONFIDENCE_THRESHOLD}
       - IOU_THRESHOLD=${IOU_THRESHOLD}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     volumes:
       - ./detection_service/models:/app/models
     deploy:

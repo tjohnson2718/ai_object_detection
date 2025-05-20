@@ -9,11 +9,34 @@ export const getBase64FromVideo = async (videoElement) => {
     return canvas.toDataURL('image/jpeg', 0.9);
 };
 
-export const detectObjectsInFrame = async (base64Image) => {
+export const parseQuery = async (query) => {
     try {
-        // Log the first 50 characters to check format
-        console.log("Image data preview:", base64Image.substring(0, 50));
-        
+        console.log("Sending query for parsing:", query);
+        const response = await fetch('/api/parse_query', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ query }),
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Error ${response.status}: ${errorText}`);
+            throw new Error(`HTTP error! Status: ${response.status}, Details: ${errorText}`);
+        }
+
+        const result = await response.json();
+        console.log("Parsed query result:", result);
+        return result.classes;
+    } catch (error) {
+        console.error('Error parsing query:', error);
+        throw error;
+    }
+};
+
+export const detectObjectsInFrame = async (base64Image, classes = null) => {
+    try {
         const response = await fetch('/api/detect', {
             method: 'POST',
             headers: {
@@ -22,12 +45,12 @@ export const detectObjectsInFrame = async (base64Image) => {
             body: JSON.stringify({
                 request: {
                     image_data: base64Image,
-                    timestamp: Date.now()
+                    timestamp: Date.now(),
+                    classes: classes  // Now we pass the classes directly
                 }
             }),
         });
 
-        // Log the response status and any error text
         if (!response.ok) {
             const errorText = await response.text();
             console.error(`Error ${response.status}: ${errorText}`);
