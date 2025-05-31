@@ -1,7 +1,11 @@
 from ultralytics import YOLO
 import os
 import yaml
+import torch
 from pathlib import Path
+
+print(torch.cuda.is_available())
+print(torch.cuda.device_count())
 
 def train_model(
     data_yaml_path: str,
@@ -9,7 +13,7 @@ def train_model(
     batch_size: int = 16,
     imgsz: int = 640,
     device: str = "0",
-    pretrained_model: str = "yolov8n.pt",
+    pretrained_model: str = "yolov8s.pt",
     project: str = "fashion_detection",
     name: str = "train1"
 ):
@@ -38,14 +42,37 @@ def train_model(
         device=device,
         project=project,
         name=name,
-        patience=20,  # Early stopping patience
-        save=True,  # Save best model
-        save_period=10,  # Save checkpoint every 10 epochs
-        exist_ok=True,  # Overwrite existing experiment
-        pretrained=True,  # Use pretrained weights
-        optimizer="auto",  # Auto-select optimizer
-        verbose=True,  # Print training progress
-        seed=42,  # For reproducibility
+        patience=30,  # Increased patience
+        save=True,
+        save_period=10,
+        exist_ok=True,
+        pretrained=True,
+        optimizer="Adam",  # Explicitly set optimizer
+        lr0=0.001,  # Initial learning rate
+        lrf=0.01,   # Final learning rate
+        momentum=0.937,  # SGD momentum
+        weight_decay=0.0005,  # L2 regularization
+        warmup_epochs=3,  # Learning rate warmup
+        warmup_momentum=0.8,
+        warmup_bias_lr=0.1,
+        box=7.5,  # Box loss gain
+        cls=0.5,  # Class loss gain
+        dfl=1.5,  # Distribution focal loss gain
+        hsv_h=0.015,  # HSV augmentation
+        hsv_s=0.7,
+        hsv_v=0.4,
+        degrees=0.0,  # Rotation augmentation
+        translate=0.1,  # Translation augmentation
+        scale=0.5,  # Scale augmentation
+        shear=0.0,  # Shear augmentation
+        perspective=0.0,  # Perspective augmentation
+        flipud=0.0,  # Flip up-down augmentation
+        fliplr=0.5,  # Flip left-right augmentation
+        mosaic=1.0,  # Mosaic augmentation
+        mixup=0.0,  # Mixup augmentation
+        copy_paste=0.0,  # Copy-paste augmentation
+        verbose=True,
+        seed=42,
     )
     
     return results
@@ -59,6 +86,7 @@ if __name__ == "__main__":
     # Set project path to be inside the data directory
     project_path = str(data_dir / "training_outputs")
     
+    best_model_path = str(data_dir / "training_outputs/train1/weights/best.pt")
     # Train the model
     results = train_model(
         data_yaml_path=data_yaml_path,
@@ -66,9 +94,9 @@ if __name__ == "__main__":
         batch_size=16,
         imgsz=640,
         device="0",  # Use GPU if available
-        pretrained_model="yolov8n.pt",
+        pretrained_model=best_model_path,
         project=project_path,
-        name="train1"
+        name="train3"
     )
     
     print("Training completed!")
