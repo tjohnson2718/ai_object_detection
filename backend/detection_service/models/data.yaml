@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 88
+names: ['-', 'Blouse_black-white', 'Blouse_deep', 'Blouse_pastel', 'Cardigan_black-white', 'Cardigan_deep', 'Cardigan_pastel', 'Cardigan_pastern', 'Cardigan_pattern', 'Cardigan_vivid', 'Denim-pants_black-white', 'Denim-pants_deep', 'Denim-pants_pastel', 'Denim-pants_pattern', 'Denim-pants_vivid', 'Hoodie_black-white', 'Hoodie_deep', 'Hoodie_pastel', 'Hoodie_vivid', 'Long-skirt_black-white', 'Long-skirt_deep', 'Long-sleeves_black-white', 'Long-sleeves_deep', 'Long-sleeves_pastel', 'Long-sleeves_pattern', 'Long-sleeves_vivid', 'Midi-skirts_black-white', 'Midi-skirts_deep', 'Midi-skirts_pastel', 'Midi-skirts_vivid', 'Mini-skirts_deep', 'One-piece_black-white', 'One-piece_deep', 'One-piece_pastel', 'Pk-shirts_black-white', 'Pk-shirts_deep', 'Pk-shirts_pastel', 'Pk-shirts_pattern', 'Pk-shirts_vivid', 'Shirts-pastel', 'Shirts_black-white', 'Shirts_deep', 'Shirts_pastel', 'Shirts_pattern', 'Shirts_vivid', 'Short-skirt_black-white', 'Short-skirt_deep', 'Short-skirt_pattern', 'Short-sleeves_black-white', 'Short-sleeves_deep', 'Short-sleeves_pastel', 'Short-sleeves_pattern', 'Short-sleeves_vivid', 'Shorts_black-white', 'Shorts_deep', 'Shorts_pastel', 'Shorts_pattern', 'Shorts_vivid', 'Slacks_black-white', 'Slacks_deep', 'Slacks_pastel', 'Slacks_pattern', 'Slacks_vivid', 'Sleeveless_black-white', 'Sleeveless_deep', 'Sleeveless_pastel', 'Sleeveless_pattern', 'Slim-pants_black-white', 'Slim-pants_deep', 'Slim-pants_pastel', 'Slim-pants_pattern', 'Slim-pants_vivid', 'Straight-pants_black-white', 'Straight-pants_deep', 'Straight-pants_pastel', 'Straight-pants_vivid', 'Sweatpants_black-white', 'Sweatshirt_black-white', 'Sweatshirt_deep', 'Sweatshirt_pastel', 'Sweatshirt_pattern', 'Sweatshirt_vivid', 'T-shirts_black-white', 'Training-pants_black-white', 'Training-pants_deep', 'Training-pants_pastel', 'Training-pants_pattern', 'Training-pants_vivid']
+
+roboflow:
+  workspace: prismfashion
+  project: fashion_yolo_prism
+  version: 5
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/prismfashion/fashion_yolo_prism/dataset/5

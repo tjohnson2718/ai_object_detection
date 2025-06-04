@@ -1,24 +1,31 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import './App.css';
-import { getBase64FromVideo, detectObjectsInFrame, parseQuery } from './services/detectionService';
+import { getBase64FromVideo, detectObjectsInFrame } from './services/detectionService';
 import DetectionOverlay from './components/DetectionOverlay';
+import './App.css';
+import { QueryParser } from './components/QueryParser';
 
 function App() {
   const webcamRef = useRef(null);
+  const detectionIntervalRef = useRef(null);
+  const currentClassesRef = useRef({ yolo: [], clothing: [] });
+  
   const [recording, setRecording] = useState(false);
   const [stream, setStream] = useState(null);
   const [detections, setDetections] = useState([]);
   const [isDetecting, setIsDetecting] = useState(false);
   const [videoSize, setVideoSize] = useState({ width: 0, height: 0});
-  const [query, setQuery] = useState('');
-  const [detectionClasses, setDetectionClasses] = useState(null);
-
-  const detectionIntervalRef = useRef(null);
+  const [detectionStats, setDetectionStats] = useState({
+    requestsSent: 0,
+    responsesReceived: 0
+  });
 
   const startWebcam = useCallback(async () => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: true,
+        video: {
+          width: 1280,
+          height: 720
+        },
         audio: false
       });
       setStream(mediaStream);
@@ -66,19 +73,24 @@ function App() {
         width: webcamRef.current.videoWidth,
         height: webcamRef.current.videoHeight
       });
+      console.log(webcamRef.current.videoWidth, webcamRef.current.videoHeight);
     }
   };
 
   const toggleDetection = useCallback(() => {
     setIsDetecting(prevState => {
       if (!prevState) {
-        // Start detection with all classes (null)
-        setDetectionClasses(null);
+        // Reset counters when starting detection
+        setDetectionStats({
+          requestsSent: 0,
+          responsesReceived: 0
+        });
+        
         runDetection();
 
         detectionIntervalRef.current = setInterval(() => {
           runDetection();
-        }, 200);
+        }, 250);
 
         return true;
       } else {
@@ -92,8 +104,8 @@ function App() {
     });
   }, []);
 
-  const handleQuerySubmit = async (e) => {
-    e.preventDefault();
+  const handleQuerySubmit = async (result) => {
+    console.log('Query submit result:', result);
     
     // Stop current detection if running
     if (isDetecting) {
@@ -104,23 +116,20 @@ function App() {
       setIsDetecting(false);
     }
 
-    try {
-      // Parse the query to get classes
-      const classes = await parseQuery(query);
-      setDetectionClasses(classes);
-      
-      // Start new detection with the parsed classes
-      setTimeout(() => {
-        setIsDetecting(true);
-        runDetection();
-        detectionIntervalRef.current = setInterval(() => {
-          runDetection();
-        }, 200);
-      }, 100);
-    } catch (error) {
-      console.error('Error processing query:', error);
-      // Optionally show an error message to the user
+    // Update the classes in the ref
+    currentClassesRef.current = {
+      yolo: result.yolo_classes || [],
+      clothing: result.clothing_classes || []
     }
+    
+    console.log('Current classes:', currentClassesRef.current);
+    
+    // Start new detection with the parsed classes
+    setIsDetecting(true);
+    runDetection();
+    detectionIntervalRef.current = setInterval(() => {
+      runDetection();
+    }, 250);
   };
 
   const runDetection = async () => {
@@ -129,27 +138,35 @@ function App() {
     try {
       const base64Image = await getBase64FromVideo(webcamRef.current);
       
+      console.log('Running detection with classes:', currentClassesRef.current);
+
       setVideoSize({
         width: webcamRef.current.videoWidth,
         height: webcamRef.current.videoHeight
       });
       
-      // Pass the current detection classes to the detection service
-      const result = await detectObjectsInFrame(base64Image, detectionClasses);
+      setDetectionStats(prev => ({
+        ...prev,
+        requestsSent: prev.requestsSent + 1
+      }));
+      
+      const result = await detectObjectsInFrame(base64Image, currentClassesRef.current.yolo, currentClassesRef.current.clothing);
       
       if (result && result.detections && Array.isArray(result.detections)) {
         const validDetections = result.detections.filter(det => 
-          det && det.bbox && 
-          typeof det.bbox.x_min === 'number' && 
-          typeof det.bbox.y_min === 'number' && 
-          typeof det.bbox.x_max === 'number' && 
-          typeof det.bbox.y_max === 'number'
+          det && det.bounding_box && 
+          typeof det.bounding_box.x_min === 'number' && 
+          typeof det.bounding_box.y_min === 'number' && 
+          typeof det.bounding_box.x_max === 'number' && 
+          typeof det.bounding_box.y_max === 'number'
         );
         
         setDetections(validDetections);
-      } else {
-        console.error("Unexpected response format:", result);
-        setDetections([]);
+        
+        setDetectionStats(prev => ({
+          ...prev,
+          responsesReceived: prev.responsesReceived + 1
+        }));
       }
     } catch (error) {
       console.error('Detection error:', error);
@@ -200,22 +217,7 @@ function App() {
         </div>
         
         {recording && (
-          <form onSubmit={handleQuerySubmit} className="query-form">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Enter what you want to detect (e.g., 'Show me all cars and people')"
-              className="query-input"
-            />
-            <button 
-              type="submit" 
-              className="query-submit"
-              disabled={!query.trim()} // Disable if query is empty
-            >
-              Apply Query
-            </button>
-          </form>
+          <QueryParser onSubmit={handleQuerySubmit} />
         )}
         
         <div className="controls">
@@ -237,16 +239,25 @@ function App() {
           )}
         </div>
         
-        {isDetecting && detections.length > 0 && (
+        {isDetecting && (
           <div className="detection-stats">
-            <h3>Detected Objects: {detections.length}</h3>
-            <ul>
-              {detections.map((det, index) => (
-                <li key={index}>
-                  {det.class_name}: {(det.confidence * 100).toFixed(1)}%
-                </li>
-              ))}
-            </ul>
+            <h3>Detection Statistics</h3>
+            <div className="stats-grid">
+              <div className="stat-item">
+                <span className="stat-label">Requests Sent:</span>
+                <span className="stat-value">{detectionStats.requestsSent}</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Responses Received:</span>
+                <span className="stat-value">{detectionStats.responsesReceived}</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Pending:</span>
+                <span className="stat-value">
+                  {detectionStats.requestsSent - detectionStats.responsesReceived}
+                </span>
+              </div>
+            </div>
           </div>
         )}
       </div>
