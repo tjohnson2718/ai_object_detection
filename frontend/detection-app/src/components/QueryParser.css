@@ -1,7 +1,7 @@
 .query-parser {
-    padding: 1rem;
-    max-width: 600px;
-    margin: 0 auto;
+    width: 100%;
+    max-width: 1280px;
+    margin: 1rem 0;
 }
 
 .query-form {
@@ -12,28 +12,49 @@
 
 .query-input {
     flex: 1;
-    padding: 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--secondary-bg);
+    border-radius: var(--border-radius);
+    background-color: var(--secondary-bg);
+    color: var(--text-primary);
     font-size: 1rem;
+    transition: border-color 0.2s ease;
 }
 
-.query-button {
-    padding: 0.5rem 1rem;
-    background-color: #007bff;
-    color: white;
+.query-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.query-submit {
+    padding: 0.75rem 1.5rem;
+    background-color: var(--accent-color);
+    color: var(--text-primary);
     border: none;
-    border-radius: 4px;
+    border-radius: var(--border-radius);
     cursor: pointer;
     font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
 }
 
-.query-button:disabled {
-    background-color: #ccc;
+.query-submit:hover {
+    background-color: #535bf2;
+    transform: translateY(-1px);
+}
+
+.query-submit:disabled {
+    background-color: var(--secondary-bg);
+    color: var(--text-secondary);
     cursor: not-allowed;
+    transform: none;
 }
 
 .error-message {
-    color: #dc3545;
+    color: var(--danger-color);
     margin-top: 1rem;
+    padding: 0.75rem;
+    background-color: rgba(244, 67, 54, 0.1);
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
 }
